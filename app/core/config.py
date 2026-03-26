@@ -15,8 +15,11 @@ class Config:
     EMAIL_PASSWORD = os.getenv("BOT_EMAIL_PASSWORD")
     IMAP_SERVER = "imap.yandex.ru"
 
+    PROVERKACHEKA_TOKEN = os.getenv("PROVERKACHEKA_TOKEN")
+
     # Google
-    GOOGLE_CREDS_PATH = os.getenv("GOOGLE_SERVICE_ACCOUNT_PATH", "creds/service_account.json")
+    _creds_relative_path = os.getenv("GOOGLE_SERVICE_ACCOUNT_PATH", "creds/service_account.json")
+    GOOGLE_CREDS_PATH = str(BASE_DIR / _creds_relative_path)
 
     @classmethod
     def validate(cls):

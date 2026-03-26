@@ -3,12 +3,11 @@ import sys
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
-LOG_DIR = Path("logs")
-LOG_DIR.mkdir(exist_ok=True)
-LOG_FILE = LOG_DIR / "app.log"
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+LOG_FILE = BASE_DIR / "logs/app.log"
 
 def setup_logger():
-    app_logger = logging.getLogger("ReceiptsBot")
+    app_logger = logging.getLogger("ReceiptsHub")
     app_logger.setLevel(logging.INFO)
 
     # Format: Date - Name - Level - Message
