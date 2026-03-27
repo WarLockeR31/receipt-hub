@@ -18,23 +18,6 @@ class UserSpreadsheet:
             logger.error(f"Failed to open spreadsheet {self.spreadsheet_id}: {e}")
             raise
 
-    def create_new(self, user_email: str) -> str:
-        title = f"Учет расходов: {user_email}"
-        try:
-            self.document = self.client.create(title)
-            self.spreadsheet_id = self.document.id
-
-            self.document.share(user_email, perm_type='user', role='writer')
-
-            worksheet = self.document.get_worksheet(0)
-            worksheet.update_title("Чеки")
-
-            logger.info(f"New spreadsheet created for {user_email}: {self.document.url}")
-            return self.spreadsheet_id
-        except Exception as e:
-            logger.error(f"Failed to create spreadsheet: {e}")
-            raise
-
     def get_receipts_tab(self) -> ReceiptsTab:
         try:
             ws = self.document.worksheet("Чеки")

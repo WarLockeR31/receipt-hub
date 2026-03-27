@@ -88,6 +88,15 @@ class Database:
             logger.error(f"Error fetching user by email {email}: {e}")
             return None
 
+    def get_user_by_tg_id(self, tg_id: int) -> Optional[tuple]:
+        query = "SELECT email, spreadsheet_id FROM users WHERE tg_id = ? AND is_active = 1"
+        try:
+            with self._get_connection() as conn:
+                return conn.execute(query, (tg_id,)).fetchone()
+        except Exception as e:
+            logger.error(f"Error fetching user by tg_id {tg_id}: {e}")
+            return None
+
     # Receipt methods
     def save_receipt(self, tg_id: int, receipt: Receipt) -> bool:
         receipt_query = """
