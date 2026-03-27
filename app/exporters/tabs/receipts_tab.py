@@ -5,12 +5,12 @@ from app.core.logger import logger
 
 class ReceiptsTab(BaseTab):
     def setup_headers(self):
-        if not self.ws.acell('A1').value:
-            headers = ["Дата", "Магазин / Товар", "Кол-во", "Ед. изм.", "Цена за ед.", "Сумма"]
+        if not self.ws.acell('B1').value:
+            headers = ["", "Дата", "Магазин", "Товар", "Кол-во", "Ед. изм.", "Цена за ед.", "Сумма", "Сумма чека"]
             self.ws.append_row(headers)
 
             self.ws.freeze(rows=1)
-            self.ws.format("A1:F1", {
+            self.ws.format("B1:I1", {
                 "textFormat": {"bold": True},
                 "backgroundColor": {"red": 0.9, "green": 0.9, "blue": 0.9}
             })
@@ -40,11 +40,13 @@ class ReceiptsTab(BaseTab):
         date_str = receipt.datetime.strftime("%Y-%m-%d %H:%M")
 
         header_row = [
-            f"▼ {date_str}",
+            f"{date_str}",
             f"🛒 {receipt.store.value} (Чек #{receipt.id[-5:]})",
             "",
             "",
-            "ИТОГО:",
+            "",
+            "",
+            "",
             receipt.total_sum
         ]
         rows_to_insert.append(header_row)
@@ -52,6 +54,7 @@ class ReceiptsTab(BaseTab):
         # Nested rows
         for item in receipt.items:
             item_row = [
+                "",
                 "",
                 f"   ↳ {item.name}",
                 item.quantity,
@@ -66,7 +69,7 @@ class ReceiptsTab(BaseTab):
         updated_range = response.get('updates', {}).get('updatedRange', '')
         logger.info(f"Google confirmed insertion in range: {updated_range}")
 
-        match = re.search(r'A(\+?\d+)', updated_range)
+        match = re.search(r'B(\+?\d+)', updated_range)
         if not match:
             logger.error("Failed to determine row index from Google response")
             return
@@ -74,9 +77,36 @@ class ReceiptsTab(BaseTab):
         start_index = int(match.group(1))
         end_index = start_index + len(receipt.items)
 
-        header_range = f"A{start_index}:F{start_index}"
-        header_union_range = f"B{start_index}:D{start_index}"
-        items_range = f"A{start_index + 1}:F{start_index + len(receipt.items)}"
+        header_range = f"B{start_index}:I{start_index}"
+        header_union_range = f"C{start_index}:H{start_index}"
+        items_range = f"B{start_index + 1}:I{start_index + len(receipt.items)}"
+        receipt_range = f"B{start_index}:I{start_index + len(receipt.items)}"
+
+        receipt_border_style = {
+            "style": "SOLID_MEDIUM",
+            "color": {"red": 0.3, "green": 0.3, "blue": 0.3}
+        }
+
+        items_border_style = {
+            "style": "SOLID",
+            "color": {"red": 0.3, "green": 0.3, "blue": 0.3}
+        }
+
+        if start_index != 2:
+            receipt_borders = {
+                "range": self._get_grid_range(receipt_range),
+                "top": receipt_border_style,
+                "bottom": receipt_border_style,
+                "left": receipt_border_style,
+                "right": receipt_border_style
+            }
+        else:
+            receipt_borders = {
+                "range": self._get_grid_range(receipt_range),
+                "bottom": receipt_border_style,
+                "left": receipt_border_style,
+                "right": receipt_border_style
+            }
 
         group_request = [
             {
@@ -94,6 +124,15 @@ class ReceiptsTab(BaseTab):
                     "range": self._get_grid_range(header_union_range),
                     "mergeType": "MERGE_ALL"
                 }
+            },
+            {
+                "updateBorders": receipt_borders
+            },
+            {
+                "updateBorders": {
+                    "range": self._get_grid_range(items_range),
+                    "top": items_border_style,
+                }
             }
         ]
 
@@ -102,10 +141,7 @@ class ReceiptsTab(BaseTab):
                 "range": header_range,
                 "format": {
                     "backgroundColor": {"red": 0.95, "green": 0.95, "blue": 1.0},
-                    "textFormat": {"bold": True},
-                    # "borders": {
-                    #     "bottom": {"style": "SOLID_MEDIUM", "color": {"red": 0.4, "green": 0.4, "blue": 0.4}}
-                    # }
+                    "textFormat": {"bold": True}
                 }
             },
             {
